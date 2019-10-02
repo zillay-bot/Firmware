@@ -33,6 +33,7 @@
 
 #include <lib/mixer/mixer.h>
 #include <mathlib/math/filter/LowPassFilter2pVector3f.hpp>
+#include <mathlib/math/filter/LowPassFilter2p.hpp>
 #include <matrix/matrix/math.hpp>
 #include <perf/perf_counter.h>
 #include <px4_config.h>
@@ -183,7 +184,8 @@ private:
 
 	perf_counter_t	_loop_perf;			/**< loop performance counter */
 
-	math::LowPassFilter2pVector3f _lp_filters_d{initial_update_rate_hz, 50.f};	/**< low-pass filters for D-term (roll, pitch & yaw) */
+	math::LowPassFilter2pVector3f _lp_filters_d{initial_update_rate_hz, 50.f};	/**< low-pass filters for D-term (roll & pitch) */
+	math::LowPassFilter2p _lp_filter_yaw_rate_error{initial_update_rate_hz, 50.f};	/**< low-pass filter for yaw rate error*/
 	static constexpr const float initial_update_rate_hz = 250.f; /**< loop update rate used for initialization */
 	float _loop_update_rate_hz{initial_update_rate_hz};          /**< current rate-controller loop update rate in [Hz] */
 
@@ -191,6 +193,7 @@ private:
 	matrix::Vector3f _rates_prev_filtered;		/**< angular rates on previous step (low-pass filtered) */
 	matrix::Vector3f _rates_sp;			/**< angular rates setpoint */
 	matrix::Vector3f _rates_int;			/**< angular rates integral error */
+	float _yaw_rate_error_prev;			/**< yaw angular rate error on previous step */
 
 	matrix::Vector3f _att_control;			/**< attitude control vector */
 	float		_thrust_sp{0.0f};		/**< thrust setpoint */
@@ -230,6 +233,9 @@ private:
 		(ParamFloat<px4::params::MC_YAWRATE_D>) _param_mc_yawrate_d,
 		(ParamFloat<px4::params::MC_YAWRATE_FF>) _param_mc_yawrate_ff,
 		(ParamFloat<px4::params::MC_YAWRATE_K>) _param_mc_yawrate_k,
+
+		(ParamFloat<px4::params::MC_YRERR_CUTOFF>)
+		_yaw_rate_error_cutoff_freq,		/**< Cutoff frequency for the yaw rate error filter */
 
 		(ParamFloat<px4::params::MC_DTERM_CUTOFF>) _param_mc_dterm_cutoff,			/**< Cutoff frequency for the D-term filter */
 

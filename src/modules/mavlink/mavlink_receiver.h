@@ -68,6 +68,7 @@
 #include <uORB/topics/home_position.h>
 #include <uORB/topics/input_rc.h>
 #include <uORB/topics/landing_target_pose.h>
+#include <uORB/topics/log_message.h>
 #include <uORB/topics/manual_control_setpoint.h>
 #include <uORB/topics/obstacle_distance.h>
 #include <uORB/topics/offboard_control_mode.h>
@@ -162,6 +163,7 @@ private:
 	void handle_message_set_mode(mavlink_message_t *msg);
 	void handle_message_set_position_target_local_ned(mavlink_message_t *msg);
 	void handle_message_set_position_target_global_int(mavlink_message_t *msg);
+	void handle_message_statustext(mavlink_message_t *msg);
 	void handle_message_trajectory_representation_waypoints(mavlink_message_t *msg);
 	void handle_message_utm_global_position(mavlink_message_t *msg);
 	void handle_message_vision_position_estimate(mavlink_message_t *msg);
@@ -237,6 +239,7 @@ private:
 	uORB::Publication<vehicle_odometry_s>			_visual_odometry_pub{ORB_ID(vehicle_visual_odometry)};
 	uORB::Publication<vehicle_rates_setpoint_s>		_rates_sp_pub{ORB_ID(vehicle_rates_setpoint)};
 	uORB::Publication<vehicle_trajectory_waypoint_s>	_trajectory_waypoint_pub{ORB_ID(vehicle_trajectory_waypoint)};
+	uORB::Publication<log_message_s>	_log_message_incoming_pub{ORB_ID(log_message_incoming)};
 
 	// ORB publications (multi)
 	uORB::PublicationMulti<distance_sensor_s>		_distance_sensor_pub{ORB_ID(distance_sensor), ORB_PRIO_LOW};

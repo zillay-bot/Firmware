@@ -245,6 +245,10 @@ MavlinkReceiver::handle_message(mavlink_message_t *msg)
 		handle_message_debug_float_array(msg);
 		break;
 
+	case MAVLINK_MSG_ID_STATUSTEXT:
+		handle_message_statustext(msg);
+		break;
+
 	default:
 		break;
 	}
@@ -2507,6 +2511,21 @@ MavlinkReceiver::handle_message_debug_float_array(mavlink_message_t *msg)
 	}
 
 	_debug_array_pub.publish(debug_topic);
+}
+
+void
+MavlinkReceiver::handle_message_statustext(mavlink_message_t *msg)
+{
+	mavlink_statustext_t msg_statustext;
+	mavlink_msg_statustext_decode(msg, &msg_statustext);
+
+	log_message_s log_msg;
+	log_msg.timestamp = hrt_absolute_time();
+	log_msg.severity = msg_statustext.severity;
+	memcpy(log_msg.text, msg_statustext.text, math::min(sizeof(log_msg.text), sizeof(msg_statustext.text)));
+	log_msg.text[sizeof(log_msg.text) - 1] = '\0';
+
+	_log_message_incoming_pub.publish(log_msg);
 }
 
 /**

@@ -73,6 +73,7 @@ MulticopterAttitudeControl::MulticopterAttitudeControl() :
 	_v_att_sp.q_d[0] = 1.f;
 
 	_rates_prev.zero();
+	_yaw_rate_error_prev = .0f;
 	_rates_prev_filtered.zero();
 	_rates_sp.zero();
 	_rates_int.zero();
@@ -118,6 +119,11 @@ MulticopterAttitudeControl::parameters_updated()
 	if (fabsf(_lp_filters_d.get_cutoff_freq() - _param_mc_dterm_cutoff.get()) > 0.01f) {
 		_lp_filters_d.set_cutoff_frequency(_loop_update_rate_hz, _param_mc_dterm_cutoff.get());
 		_lp_filters_d.reset(_rates_prev);
+	}
+
+	if (fabsf(_lp_filter_yaw_rate_error.get_cutoff_freq() - _yaw_rate_error_cutoff_freq.get()) > 0.01f) {
+		_lp_filter_yaw_rate_error.set_cutoff_frequency(_loop_update_rate_hz, _yaw_rate_error_cutoff_freq.get());
+		_lp_filter_yaw_rate_error.reset(_yaw_rate_error_prev);
 	}
 
 	// angular rate limits
@@ -414,6 +420,10 @@ MulticopterAttitudeControl::control_attitude_rates(float dt, const Vector3f &rat
 
 	/* apply low-pass filtering to the rates for D-term */
 	Vector3f rates_filtered(_lp_filters_d.apply(rates));
+	rates_filtered(2) = rates(2);
+
+	/* apply low-pass filtering to the yaw rate error */
+	rates_err(2) = _lp_filter_yaw_rate_error.apply(rates_err(2));
 
 	_att_control = _rate_k.emult(rates_p_scaled.emult(rates_err) +
 				     _rates_int -
@@ -421,6 +431,7 @@ MulticopterAttitudeControl::control_attitude_rates(float dt, const Vector3f &rat
 		       _rate_ff.emult(_rates_sp);
 
 	_rates_prev = rates;
+	_yaw_rate_error_prev = rates_err(2);
 	_rates_prev_filtered = rates_filtered;
 
 	/* update integral only if we are not landed */
@@ -668,6 +679,7 @@ MulticopterAttitudeControl::Run()
 				_dt_accumulator = 0;
 				_loop_counter = 0;
 				_lp_filters_d.set_cutoff_frequency(_loop_update_rate_hz, _param_mc_dterm_cutoff.get());
+				_lp_filter_yaw_rate_error.set_cutoff_frequency(_loop_update_rate_hz, _yaw_rate_error_cutoff_freq.get());
 			}
 		}
 
