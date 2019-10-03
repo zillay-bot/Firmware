@@ -333,7 +333,7 @@ void CollisionPrevention::modifySetpoint(Vector2f &original_setpoint, const floa
 				      || new_setpoint(1) > original_setpoint(1) + 0.05f * max_speed);
 
 	if (currently_interfering && (currently_interfering != _interfering)) {
-		mavlink_log_critical(&_mavlink_log_pub, "Collision Warning");
+		mavlink_log_info(&_mavlink_log_pub, "Collision Prevention limiting velocity");
 	}
 
 	_interfering = currently_interfering;
