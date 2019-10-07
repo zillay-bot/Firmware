@@ -31,59 +31,56 @@
  *
  ****************************************************************************/
 
-/**
- * @file TrajMath.hpp
- *
- * collection of functions used in trajectory generators
- */
+#include <px4_config.h>
+#include <px4_module.h>
+#include <px4_getopt.h>
+#include <px4_platform_common/px4_work_queue/WorkQueueManager.hpp>
 
-#pragma once
+static void	usage();
 
-namespace trajmath
-{
-
-/* Compute the maximum possible speed on the track given the remaining distance,
- * the maximum acceleration and the maximum jerk.
- * We assume a constant acceleration profile with a delay of 2*accel/jerk
- * (time to reach the desired acceleration from opposite max acceleration)
- * Equation to solve: 0 = vel^2 - 2*accel*(x - vel*2*accel/jerk)
- *
- * @param jerk maximum jerk
- * @param accel maximum acceleration
- * @param braking_distance distance to the desired stopping point
- *
- * @return maximum speed
- */
-template<typename T>
-const T computeMaxSpeedFromBrakingDistance(T jerk, T accel, T braking_distance)
-{
-	T b = (T) 4 * accel * accel / jerk;
-	T c = - (T) 2 * accel * braking_distance;
-	T max_speed = (T) 0.5 * (-b + sqrtf(b * b - (T) 4 * c));
-
-	return max_speed;
+extern "C" {
+	__EXPORT int work_queue_main(int argc, char *argv[]);
 }
 
-/* Compute the maximum tangential speed in a circle defined by two line segments of length "d"
- * forming a V shape, opened by an angle "alpha". The circle is tangent to the end of the
- * two segments as shown below:
- *      \\
- *      | \ d
- *      /  \
- *  __='___a\
- *      d
- *  @param alpha angle between the two line segments
- *  @param accel maximum lateral acceleration
- *  @param d length of the two line segments
- *
- *  @return maximum tangential speed
- */
-template<typename T>
-const T computeMaxSpeedInWaypoint(T alpha, T accel, T d)
+int
+work_queue_main(int argc, char *argv[])
 {
-	T tan_alpha = tan(alpha / (T) 2);
-	T max_speed_in_turn = sqrtf(accel * d * tan_alpha);
+	if (argc != 2) {
+		usage();
+		return 1;
+	}
 
-	return max_speed_in_turn;
+	if (!strcmp(argv[1], "start")) {
+		px4::WorkQueueManagerStart();
+		return 0;
+
+	} else if (!strcmp(argv[1], "stop")) {
+		px4::WorkQueueManagerStop();
+		return 0;
+
+	} else if (!strcmp(argv[1], "status")) {
+		px4::WorkQueueManagerStatus();
+		return 0;
+	}
+
+	usage();
+
+	return 0;
 }
-} /* namespace trajmath */
+
+static void
+usage()
+{
+
+	PRINT_MODULE_DESCRIPTION(
+		R"DESCR_STR(
+### Description
+
+Command-line tool to show work queue status.
+
+)DESCR_STR");
+
+	PRINT_MODULE_USAGE_NAME("work_queue", "system");
+	PRINT_MODULE_USAGE_COMMAND("start");
+	PRINT_MODULE_USAGE_DEFAULT_COMMANDS();
+}
