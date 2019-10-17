@@ -51,7 +51,7 @@ enum class LED_PATTERN : uint16_t {
 };
 
 SafetyButton::SafetyButton() :
-	ScheduledWorkItem(px4::wq_configurations::hp_default)
+	ScheduledWorkItem(MODULE_NAME, px4::wq_configurations::hp_default)
 {
 	_safety_disabled = circuit_breaker_enabled("CBRK_IO_SAFETY", CBRK_IO_SAFETY_KEY);
 
