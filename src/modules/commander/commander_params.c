@@ -974,3 +974,14 @@ PARAM_DEFINE_INT32(COM_PREARM_MODE, 1);
  * The default allows the vehicle to arm without the onboard logger reporting as ready via it's heartbeat
  */
 PARAM_DEFINE_INT32(COM_ARM_WO_OBLOG, 0);
+
+/**
+ * Enable Motor Testing
+ *
+ * If set, enables the motor test interface via MAVLink (DO_MOTOR_TEST), that
+ * allows spinning the motors for testing purposes.
+ *
+ * @boolean
+ * @group Commander
+ */
+PARAM_DEFINE_INT32(COM_MOT_TEST_EN, 1);
