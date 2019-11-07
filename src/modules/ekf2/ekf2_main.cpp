@@ -1687,7 +1687,7 @@ void Ekf2::Run()
 
 void Ekf2::runEkfReinit(const hrt_abstime sensor_time_us)
 {
-	const bool is_armed = (_vehicle_status.arming_state != vehicle_status_s::ARMING_STATE_ARMED);
+	const bool is_armed = (_vehicle_status.arming_state == vehicle_status_s::ARMING_STATE_ARMED);
 
 	if (is_armed) {
 		_ekf_reinit_eval.reset();
