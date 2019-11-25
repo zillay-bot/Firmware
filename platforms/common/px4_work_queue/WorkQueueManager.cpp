@@ -36,10 +36,10 @@
 #include <px4_platform_common/px4_work_queue/WorkQueue.hpp>
 
 #include <drivers/drv_hrt.h>
-#include <px4_posix.h>
-#include <px4_tasks.h>
-#include <px4_time.h>
-#include <px4_atomic.h>
+#include <px4_platform_common/posix.h>
+#include <px4_platform_common/tasks.h>
+#include <px4_platform_common/time.h>
+#include <px4_platform_common/atomic.h>
 #include <containers/BlockingList.hpp>
 #include <containers/BlockingQueue.hpp>
 #include <lib/drivers/device/Device.hpp>
@@ -129,6 +129,8 @@ device_bus_to_wq(uint32_t device_id_int)
 
 	if (bus_type == device::Device::DeviceBusType_I2C) {
 		switch (bus) {
+		case 0: return wq_configurations::I2C0;
+
 		case 1: return wq_configurations::I2C1;
 
 		case 2: return wq_configurations::I2C2;
@@ -140,6 +142,8 @@ device_bus_to_wq(uint32_t device_id_int)
 
 	} else if (bus_type == device::Device::DeviceBusType_SPI) {
 		switch (bus) {
+		case 0: return wq_configurations::SPI0;
+
 		case 1: return wq_configurations::SPI1;
 
 		case 2: return wq_configurations::SPI2;
@@ -203,10 +207,16 @@ WorkQueueManagerRun(int, char **)
 			}
 
 			// stack size
-#ifndef __PX4_QURT
-			const size_t stacksize = math::max(PTHREAD_STACK_MIN, PX4_STACK_ADJUSTED(wq->stacksize));
-#else
+#if defined(__PX4_QURT)
 			const size_t stacksize = math::max(8 * 1024, PX4_STACK_ADJUSTED(wq->stacksize));
+#elif defined(__PX4_NUTTX)
+			const size_t stacksize = math::max((uint16_t)PTHREAD_STACK_MIN, wq->stacksize);
+#elif defined(__PX4_POSIX)
+			// On posix system , the desired stacksize round to the nearest multiplier of the system pagesize
+			// It is a requirement of the  pthread_attr_setstacksize* function
+			const unsigned int page_size = sysconf(_SC_PAGESIZE);
+			const size_t stacksize_adj = math::max(PTHREAD_STACK_MIN, PX4_STACK_ADJUSTED(wq->stacksize));
+			const size_t stacksize = (stacksize_adj + page_size - (stacksize_adj % page_size));
 #endif
 			int ret_setstacksize = pthread_attr_setstacksize(&attr, stacksize);
 

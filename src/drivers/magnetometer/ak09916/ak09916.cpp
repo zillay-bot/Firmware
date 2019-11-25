@@ -35,13 +35,13 @@
  * Driver for the standalone AK09916 magnetometer.
  */
 
-#include <px4_config.h>
-#include <px4_log.h>
-#include <px4_time.h>
+#include <px4_platform_common/px4_config.h>
+#include <px4_platform_common/log.h>
+#include <px4_platform_common/time.h>
 #include <lib/perf/perf_counter.h>
 #include <drivers/drv_hrt.h>
 #include <lib/conversion/rotation.h>
-#include <px4_getopt.h>
+#include <px4_platform_common/getopt.h>
 
 #include "ak09916.hpp"
 

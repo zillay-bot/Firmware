@@ -39,7 +39,7 @@
 #include <lib/cdev/CDev.hpp>
 
 #include <containers/List.hpp>
-#include <px4_atomic.h>
+#include <px4_platform_common/atomic.h>
 
 namespace uORB
 {

@@ -261,6 +261,14 @@ SafetyButton::custom_command(int argc, char *argv[])
 }
 
 int
+SafetyButton::print_status()
+{
+	PX4_INFO("Safety State (from button): %s", _safety_btn_off ? "off" : "on");
+
+	return 0;
+}
+
+int
 SafetyButton::print_usage(const char *reason)
 {
 	if (reason) {
@@ -277,15 +285,6 @@ This module is responsible for the safety button.
 	PRINT_MODULE_USAGE_NAME("safety_button", "driver");
 	PRINT_MODULE_USAGE_COMMAND("start");
 	PRINT_MODULE_USAGE_DEFAULT_COMMANDS();
-
-	return 0;
-}
-
-int
-SafetyButton::print_status()
-{
-	PX4_INFO("Safety State (from button): %s", _safety_btn_off ? "off" : "on");
-	PX4_INFO("Safety Disabled: %s", _safety_disabled ? "yes" : "no");
 
 	return 0;
 }

@@ -42,9 +42,9 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-#include <px4_tasks.h>
-#include <px4_getopt.h>
-#include <px4_posix.h>
+#include <px4_platform_common/tasks.h>
+#include <px4_platform_common/getopt.h>
+#include <px4_platform_common/posix.h>
 
 #include <errno.h>
 #include <string.h>
@@ -56,7 +56,7 @@
 #include <uORB/topics/battery_status.h>
 #include <uORB/topics/esc_status.h>
 
-#include <lib/mixer/mixer.h>
+#include <lib/mixer/MixerGroup.hpp>
 #include <lib/mixer/mixer_load.h>
 #include <battery/battery.h>
 
@@ -219,7 +219,6 @@ int DfBebopBusWrapper::_publish(struct bebop_state_data &data)
 	for (int i = 0; i < 4; i++) {
 		esc_status.esc[_esc_map[i]].timestamp = esc_status.timestamp;
 		esc_status.esc[_esc_map[i]].esc_rpm = data.rpm[i];
-		esc_status.esc[_esc_map[i]].esc_setpoint_raw = esc_speed_setpoint_rpm[i];
 	}
 
 	// TODO: when is this ever blocked?
@@ -308,7 +307,7 @@ int initialize_mixers(const char *mixers_filename)
 	}
 
 	if (_mixers == nullptr) {
-		_mixers = new MixerGroup(mixers_control_callback, (uintptr_t)_controls);
+		_mixers = new MixerGroup();
 	}
 
 	if (_mixers == nullptr) {
@@ -316,7 +315,7 @@ int initialize_mixers(const char *mixers_filename)
 		return -1;
 
 	} else {
-		int ret = _mixers->load_from_buf(buf, buflen);
+		int ret = _mixers->load_from_buf(mixers_control_callback, (uintptr_t)_controls, buf, buflen);
 
 		if (ret != 0) {
 			PX4_ERR("Unable to parse mixers file");

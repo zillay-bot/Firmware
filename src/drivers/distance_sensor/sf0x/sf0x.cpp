@@ -39,8 +39,8 @@
  * Driver for the Lightware SF0x laser rangefinder series
  */
 
-#include <px4_config.h>
-#include <px4_getopt.h>
+#include <px4_platform_common/px4_config.h>
+#include <px4_platform_common/getopt.h>
 #include <px4_platform_common/px4_work_queue/ScheduledWorkItem.hpp>
 
 #include <sys/types.h>
@@ -63,6 +63,7 @@
 #include <drivers/drv_range_finder.h>
 #include <drivers/device/device.h>
 #include <drivers/device/ringbuffer.h>
+#include <lib/parameters/param.h>
 
 #include <uORB/uORB.h>
 #include <uORB/topics/distance_sensor.h>

@@ -3,6 +3,8 @@
 # PX4 FMUv5X specific board sensors init
 #------------------------------------------------------------------------------
 
+adc start
+
 # Start Digital power monitors
 ina226 -b 1 start
 ina226 -b 2 start
@@ -31,3 +33,6 @@ bmm150 start
 # Possible internal Barro
 bmp388 -I start
 #bmp388 -J start fixme
+
+# External RM3100 (I2C or SPI)
+rm3100 start

@@ -43,7 +43,7 @@
  * Included Files
  ****************************************************************************************************/
 
-#include <px4_config.h>
+#include <px4_platform_common/px4_config.h>
 #include <nuttx/compiler.h>
 #include <stdint.h>
 
@@ -275,6 +275,13 @@
 #define PX4_I2C_BUS_EXPANSION2      3
 #define PX4_I2C_BUS_ONBOARD         4
 #define PX4_I2C_BUS_LED             PX4_I2C_BUS_EXPANSION
+
+/* Devices on the onboard bus.
+ *
+ * Note that these are unshifted addresses.
+ */
+#define PX4_I2C_OBDEV_BMP388        0x76
+#define PX4_I2C_OBDEV_A71CH         0x49
 
 #define BOARD_NUMBER_I2C_BUSES      4
 #define BOARD_I2C_BUS_CLOCK_INIT    {100000, 100000, 100000, 100000}
@@ -716,27 +723,7 @@ extern void stm32_usbinitialize(void);
 
 extern void board_peripheral_reset(int ms);
 
-
-/****************************************************************************
- * Name: nsh_archinitialize
- *
- * Description:
- *   Perform architecture specific initialization for NSH.
- *
- *   CONFIG_NSH_ARCHINIT=y :
- *     Called from the NSH library
- *
- *   CONFIG_BOARD_INITIALIZE=y, CONFIG_NSH_LIBRARY=y, &&
- *   CONFIG_NSH_ARCHINIT=n :
- *     Called from board_initialize().
- *
- ****************************************************************************/
-
-#ifdef CONFIG_NSH_LIBRARY
-int nsh_archinitialize(void);
-#endif
-
-#include <drivers/boards/common/board_common.h>
+#include <px4_platform_common/board_common.h>
 
 #endif /* __ASSEMBLY__ */
 

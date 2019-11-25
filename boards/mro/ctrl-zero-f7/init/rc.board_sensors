@@ -3,6 +3,8 @@
 # mRo Control Zero specific board sensors init
 #------------------------------------------------------------------------------
 
+adc start
+
 # Internal ICM-20602
 mpu6000 -R 10 -s -T 20602 start
 
@@ -16,7 +18,8 @@ bmi088 start
 dps310 start
 
 # Possible external compasses
-#ist8310 -C -b 1 start
-#ist8310 -C -b 2 start
-#hmc5883 -C -T -X start
-#qmc5883 -X start
+ist8310 -C -b 1 start
+ist8310 -C -b 2 start
+hmc5883 -C -T -X start
+qmc5883 -X start
+lis3mdl -X start
