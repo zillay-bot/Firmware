@@ -47,7 +47,7 @@
 #include "mavlink_parameters.h"
 #include "mavlink_timesync.h"
 
-#include <px4_module_params.h>
+#include <px4_platform_common/module_params.h>
 #include <uORB/Publication.hpp>
 #include <uORB/PublicationQueued.hpp>
 #include <uORB/PublicationMulti.hpp>
@@ -203,6 +203,8 @@ private:
 	void send_flight_information();
 	void send_storage_information(int storage_id);
 
+	void fill_thrust(float *thrust_body_array, uint8_t vehicle_type, float thrust);
+
 	/**
 	 * @brief Updates the battery, optical flow, and flight ID subscribed parameters.
 	 */
@@ -230,6 +232,7 @@ private:
 	uORB::Publication<debug_vect_s>				_debug_vect_pub{ORB_ID(debug_vect)};
 	uORB::Publication<follow_target_s>			_follow_target_pub{ORB_ID(follow_target)};
 	uORB::Publication<landing_target_pose_s>		_landing_target_pose_pub{ORB_ID(landing_target_pose)};
+	uORB::Publication<log_message_s>			_log_message_pub{ORB_ID(log_message)};
 	uORB::Publication<obstacle_distance_s>			_obstacle_distance_pub{ORB_ID(obstacle_distance)};
 	uORB::Publication<offboard_control_mode_s>		_offboard_control_mode_pub{ORB_ID(offboard_control_mode)};
 	uORB::Publication<onboard_computer_status_s>		_onboard_computer_status_pub{ORB_ID(onboard_computer_status)};
@@ -237,6 +240,8 @@ private:
 	uORB::Publication<position_setpoint_triplet_s>		_pos_sp_triplet_pub{ORB_ID(position_setpoint_triplet)};
 	uORB::Publication<vehicle_attitude_s>			_attitude_pub{ORB_ID(vehicle_attitude)};
 	uORB::Publication<vehicle_attitude_setpoint_s>		_att_sp_pub{ORB_ID(vehicle_attitude_setpoint)};
+	uORB::Publication<vehicle_attitude_setpoint_s>		_mc_virtual_att_sp_pub{ORB_ID(mc_virtual_attitude_setpoint)};
+	uORB::Publication<vehicle_attitude_setpoint_s>		_fw_virtual_att_sp_pub{ORB_ID(fw_virtual_attitude_setpoint)};
 	uORB::Publication<vehicle_global_position_s>		_global_pos_pub{ORB_ID(vehicle_global_position)};
 	uORB::Publication<vehicle_gps_position_s>		_gps_pub{ORB_ID(vehicle_gps_position)};
 	uORB::Publication<vehicle_land_detected_s>		_land_detector_pub{ORB_ID(vehicle_land_detected)};
@@ -271,6 +276,7 @@ private:
 	uORB::Subscription	_parameter_update_sub{ORB_ID(parameter_update)};
 	uORB::Subscription	_vehicle_attitude_sub{ORB_ID(vehicle_attitude)};
 	uORB::Subscription	_vehicle_local_position_sub{ORB_ID(vehicle_local_position)};
+	uORB::Subscription	_vehicle_status_sub{ORB_ID(vehicle_status)};
 
 	static constexpr unsigned int	MOM_SWITCH_COUNT{8};
 	uint8_t				_mom_switch_pos[MOM_SWITCH_COUNT] {};

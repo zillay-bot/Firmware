@@ -35,12 +35,12 @@
  * @file ToneAlarmInterface.cpp
  */
 
-#include "chip/kinetis_sim.h"
+#include "hardware/kinetis_sim.h"
 #include "kinetis_tpm.h"
 
 #include <drivers/device/device.h>
 #include <drivers/drv_tone_alarm.h>
-#include <px4_defines.h>
+#include <px4_platform_common/defines.h>
 #include <systemlib/px4_macros.h>
 
 #include <cmath>

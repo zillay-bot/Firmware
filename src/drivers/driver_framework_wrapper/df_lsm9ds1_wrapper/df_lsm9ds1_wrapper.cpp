@@ -38,7 +38,7 @@
  * @author Miguel Arroyo <miguel@arroyo.me>
  */
 
-#include <px4_config.h>
+#include <px4_platform_common/px4_config.h>
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -48,11 +48,11 @@
 #include <string.h>
 #include <math.h>
 #include <unistd.h>
-#include <px4_getopt.h>
+#include <px4_platform_common/getopt.h>
 #include <errno.h>
 
 #include <systemlib/err.h>
-
+#include <lib/parameters/param.h>
 #include <perf/perf_counter.h>
 #include <systemlib/mavlink_log.h>
 
