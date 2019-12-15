@@ -1,0 +1,23 @@
+name: SITL Tests
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: px4io/px4-dev-ros-melodic:2019-10-24
+    steps:
+    - uses: actions/checkout@v1
+    #- uses: actions/setup-python@v1
+    #  with:
+    #  python-version: '3.x'
+    - name: build SITL
+      run: make px4_sitl_default
+    - name: build Gazebo
+      run: make px4_sitl_default sitl_gazebo
+    - name: install MAVSDK
+      run: pip3 install mavsdk
+
+    # Next step: Run the same scripts as done by Jenkins
+    # https://github.com/Auterion/PX4_firmware_private/blob/develop/.ci/Jenkinsfile-SITL_tests#L144
+

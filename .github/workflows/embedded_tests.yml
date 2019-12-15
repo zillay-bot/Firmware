@@ -1,0 +1,16 @@
+name: Autopilot builds
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: px4io/px4-dev-nuttx:2019-10-24
+    steps:
+    - uses: actions/checkout@v1
+    - name: Build FMUv3 (Hex Cube)
+      run: make px4_fmu-v3_default
+    - name: Build FMUv5 (Pixhawk 4)
+      run: make px4_fmu-v5_default
+    - name: Build FMUv5X (Auterion Skynode)
+      run: make px4_fmu-v5x_default
