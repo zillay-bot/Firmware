@@ -694,7 +694,7 @@ void Simulator::poll_for_MAVLink_messages()
 				break;
 
 			} else {
-				system_sleep(1);
+				system_usleep(100);
 			}
 		}
 
