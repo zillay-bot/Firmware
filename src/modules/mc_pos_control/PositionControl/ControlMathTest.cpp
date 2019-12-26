@@ -150,7 +150,7 @@ TEST(ControlMathTest, CrossSphereLine)
 	// near, before previous waypoint
 	retval = cross_sphere_line(Vector3f(0.f, .5f, -.5f), 1.f, prev, curr, res);
 	EXPECT_TRUE(retval);
-	EXPECT_EQ(res, Vector3f(0.f, 0.f, 0.366025388f));
+	EXPECT_EQ(res, Vector3f(0.f, 0.f, .366025388f));
 
 	// near, before target waypoint
 	retval = cross_sphere_line(Vector3f(0.f, .5f, 1.f), 1.f, prev, curr, res);
