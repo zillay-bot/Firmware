@@ -135,17 +135,17 @@ TEST(ControlMathTest, CrossSphereLine)
 	// on line, near, before previous waypoint
 	retval = cross_sphere_line(Vector3f(0.f, 0.f, -.5f), 1.f, prev, curr, res);
 	EXPECT_TRUE(retval);
-	EXPECT_TRUE(matrix::isEqual(res, Vector3f(0.f, 0.f, 0.5f)));
+	EXPECT_EQ(res, Vector3f(0.f, 0.f, 0.5f));
 
 	// on line, near, before target waypoint
 	retval = cross_sphere_line(Vector3f(0.f, 0.f, 1.f), 1.f, prev, curr, res);
 	EXPECT_TRUE(retval);
-	EXPECT_TRUE(matrix::isEqual(res, Vector3f(0.f, 0.f, 2.f)));
+	EXPECT_EQ(res, Vector3f(0.f, 0.f, 2.f));
 
 	// on line, near, after target waypoint
 	retval = cross_sphere_line(Vector3f(0.f, 0.f, 2.5f), 1.f, prev, curr, res);
 	EXPECT_TRUE(retval);
-	EXPECT_TRUE(matrix::isEqual(res, Vector3f(0.f, 0.f, 2.f)));
+	EXPECT_EQ(res, Vector3f(0.f, 0.f, 2.f));
 
 	// near, before previous waypoint
 	retval = cross_sphere_line(Vector3f(0.f, .5f, -.5f), 1.f, prev, curr, res);
@@ -155,27 +155,27 @@ TEST(ControlMathTest, CrossSphereLine)
 	// near, before target waypoint
 	retval = cross_sphere_line(Vector3f(0.f, .5f, 1.f), 1.f, prev, curr, res);
 	EXPECT_TRUE(retval);
-	EXPECT_TRUE(matrix::isEqual(res, Vector3f(0.f, 0.f, 1.866025448f)));
+	EXPECT_EQ(res, Vector3f(0.f, 0.f, 1.866025448f));
 
 	// near, after target waypoint
 	retval = ControlMath::cross_sphere_line(matrix::Vector3f(0.f, .5f, 2.5f), 1.f, prev, curr, res);
 	EXPECT_TRUE(retval);
-	EXPECT_TRUE(matrix::isEqual(res, Vector3f(0.f, 0.f, 2.f)));
+	EXPECT_EQ(res, Vector3f(0.f, 0.f, 2.f));
 
 	// far, before previous waypoint
 	retval = ControlMath::cross_sphere_line(matrix::Vector3f(0.f, 2.f, -.5f), 1.f, prev, curr, res);
 	EXPECT_FALSE(retval);
-	EXPECT_TRUE(matrix::isEqual(res, Vector3f()));
+	EXPECT_EQ(res, Vector3f());
 
 	// far, before target waypoint
 	retval = ControlMath::cross_sphere_line(matrix::Vector3f(0.f, 2.f, 1.f), 1.f, prev, curr, res);
 	EXPECT_FALSE(retval);
-	EXPECT_TRUE(matrix::isEqual(res, Vector3f(0.f, 0.f, 1.f)));
+	EXPECT_EQ(res, Vector3f(0.f, 0.f, 1.f));
 
 	// far, after target waypoint
 	retval = ControlMath::cross_sphere_line(matrix::Vector3f(0.f, 2.f, 2.5f), 1.f, prev, curr, res);
 	EXPECT_FALSE(retval);
-	EXPECT_TRUE(matrix::isEqual(res, Vector3f(0.f, 0.f, 2.f)));
+	EXPECT_EQ(res, Vector3f(0.f, 0.f, 2.f));
 }
 
 TEST(ControlMathTest, addIfNotNan)
