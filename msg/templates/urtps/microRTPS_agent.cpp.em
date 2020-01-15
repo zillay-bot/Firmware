@@ -12,7 +12,7 @@
 @###############################################
 @{
 import genmsg.msgs
-import gencpp
+
 from px_generate_uorb_topic_helper import * # this is in Tools/
 from px_generate_uorb_topic_files import MsgScope # this is in Tools/
 
@@ -22,6 +22,7 @@ recv_topics = [(alias[idx] if alias[idx] else s.short_name) for idx, s in enumer
 /****************************************************************************
  *
  * Copyright 2017 Proyectos y Sistemas de Mantenimiento SL (eProsima).
+ * Copyright (c) 2018-2019 PX4 Development Team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:

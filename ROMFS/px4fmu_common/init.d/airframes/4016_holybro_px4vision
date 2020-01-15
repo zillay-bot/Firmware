@@ -10,6 +10,8 @@
 # @output MAIN3 motor 3
 # @output MAIN4 motor 4
 #
+# @board px4_fmu-v2 exclude
+#
 
 sh /etc/init.d/rc.mc_defaults
 
@@ -57,10 +59,21 @@ then
 	param set SER_TEL1_BAUD 921600
 
 	# Vehicle attitude PID tuning
+	param set MC_ACRO_EXPO 0
+	param set MC_ACRO_EXPO_Y 0
+	param set MC_ACRO_P_MAX 200
+	param set MC_ACRO_R_MAX 200
+	param set MC_ACRO_SUPEXPO 0
+	param set MC_ACRO_SUPEXPOY 0
+	param set MC_ACRO_Y_MAX 150
 	param set MC_DTERM_CUTOFF 30
 	param set MC_PITCHRATE_D 0.0015
+	param set MC_PITCHRATE_I 0.2
+	param set MC_PITCHRATE_K 1
 	param set MC_PITCHRATE_P 0.15
 	param set MC_ROLLRATE_D 0.0015
+	param set MC_ROLLRATE_I 0.2
+	param set MC_ROLLRATE_K 1
 	param set MC_ROLLRATE_P 0.15
 	param set MC_YAWRATE_P 0.3
 
@@ -105,6 +118,7 @@ then
 	param set SDLOG_PROFILE 131
 
 	# Sensors Parameters
+	param set SENS_BOARD_ROT 0
 	param set SENS_CM8JL65_CFG 104
 	param set SENS_FLOW_MAXHGT 25
 	param set SENS_FLOW_MINHGT 0.5
