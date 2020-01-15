@@ -1,0 +1,12 @@
+#!/bin/sh
+#
+# @name PX4Vision SITL
+# Holybro px4vision. Gazebo Only.
+#
+# @type Quadrotor
+#
+
+sh /etc/init.d/rc.mc_defaults
+
+set MIXER quad_x
+
