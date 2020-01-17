@@ -1,0 +1,24 @@
+name: compile nuttx
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: px4io/px4-dev-nuttx:2020-01-13
+    strategy:
+      matrix:
+        config: [
+          px4_io-v2_default,
+          px4_fmu-v3_default,
+          px4_fmu-v4_default,
+          px4_fmu-v5_default, px4_fmu-v5_fixedwing, px4_fmu-v5_multicopter, px4_fmu-v5_rover, px4_fmu-v5_rtps, px4_fmu-v5_stackcheck,
+          px4_fmu-v5x_default,
+          holybro_durandal-v1_default, holybro_durandal-v1_stackcheck,
+          ]
+    steps:
+    - uses: actions/checkout@v1
+      with:
+        token: ${{ secrets.ACCESS_TOKEN }}
+    - name: make ${{ matrix.config }}
+      run: make ${{ matrix.config }}

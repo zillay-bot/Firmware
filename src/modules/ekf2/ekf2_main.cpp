@@ -56,7 +56,7 @@
 #include <uORB/SubscriptionCallback.hpp>
 #include <uORB/topics/airspeed.h>
 #include <uORB/topics/distance_sensor.h>
-#include <uORB/topics/ekf2_innovations.h>
+#include <uORB/topics/estimator_innovations.h>
 #include <uORB/topics/ekf2_timestamps.h>
 #include <uORB/topics/ekf_gps_position.h>
 #include <uORB/topics/estimator_status.h>
@@ -79,7 +79,6 @@
 #include <uORB/topics/wind_estimate.h>
 
 #include "Utility/PreFlightChecker.hpp"
-#include "Utility/ReInitEvaluator.hpp"
 
 // defines used to specify the mask position for use of different accuracy metrics in the GPS blending algorithm
 #define BLEND_MASK_USE_SPD_ACC      1
@@ -118,13 +117,10 @@ private:
 	int getRangeSubIndex(); ///< get subscription index of first downward-facing range sensor
 	void fillGpsMsgWithVehicleGpsPosData(gps_message &msg, const vehicle_gps_position_s &data);
 
-	ReInitEvaluator _ekf_reinit_eval;
-	void runEkfReinit(const hrt_abstime sensor_time_us);
-
 	PreFlightChecker _preflt_checker;
 	void runPreFlightChecks(float dt, const filter_control_status_u &control_status,
 				const vehicle_status_s &vehicle_status,
-				const ekf2_innovations_s &innov);
+				const estimator_innovations_s &innov);
 	void resetPreFlightChecks();
 
 	template<typename Param>
@@ -174,6 +170,8 @@ private:
 	 * Calculate filtered WGS84 height from estimated AMSL height
 	 */
 	float filter_altitude_ellipsoid(float amsl_hgt);
+
+	inline float sq(float x) { return x * x; };
 
 	const bool 	_replay_mode;			///< true when we use replay data from a log
 
@@ -271,7 +269,9 @@ private:
 	vehicle_land_detected_s		_vehicle_land_detected{};
 	vehicle_status_s		_vehicle_status{};
 
-	uORB::Publication<ekf2_innovations_s>			_estimator_innovations_pub{ORB_ID(ekf2_innovations)};
+	uORB::Publication<estimator_innovations_s>			_estimator_innovations_pub{ORB_ID(estimator_innovations)};
+	uORB::Publication<estimator_innovations_s>			_estimator_innovation_variances_pub{ORB_ID(estimator_innovation_variances)};
+	uORB::Publication<estimator_innovations_s>			_estimator_innovation_test_ratios_pub{ORB_ID(estimator_innovation_test_ratios)};
 	uORB::Publication<ekf2_timestamps_s>			_ekf2_timestamps_pub{ORB_ID(ekf2_timestamps)};
 	uORB::Publication<ekf_gps_drift_s>			_ekf_gps_drift_pub{ORB_ID(ekf_gps_drift)};
 	uORB::Publication<ekf_gps_position_s>			_blended_gps_pub{ORB_ID(ekf_gps_position)};
@@ -538,7 +538,7 @@ Ekf2::Ekf2(bool replay_mode):
 	ModuleParams(nullptr),
 	WorkItem(MODULE_NAME, px4::wq_configurations::att_pos_ctrl),
 	_replay_mode(replay_mode),
-	_ekf_update_perf(perf_alloc_once(PC_ELAPSED, MODULE_NAME": update")),
+	_ekf_update_perf(perf_alloc(PC_ELAPSED, MODULE_NAME": update")),
 	_params(_ekf.getParamHandle()),
 	_param_ekf2_min_obs_dt(_params->sensor_interval_min_ms),
 	_param_ekf2_mag_delay(_params->mag_delay_ms),
@@ -725,8 +725,6 @@ void Ekf2::Run()
 			// update parameters from storage
 			updateParams();
 		}
-
-		runEkfReinit(sensors.timestamp);
 
 		// ekf2_timestamps (using 0.1 ms relative timestamps)
 		ekf2_timestamps_s ekf2_timestamps{};
@@ -1110,14 +1108,17 @@ void Ekf2::Run()
 				ev_data.vel(2) = _ev_odom.vz;
 
 				// velocity measurement error from ev_data or parameters
-				if (!_param_ekf2_ev_noise_md.get() && PX4_ISFINITE(_ev_odom.pose_covariance[_ev_odom.COVARIANCE_MATRIX_VX_VARIANCE])) {
-					ev_data.velErr = fmaxf(_param_ekf2_evv_noise.get(),
-							       sqrtf(fmaxf(_ev_odom.pose_covariance[_ev_odom.COVARIANCE_MATRIX_VX_VARIANCE],
-									   fmaxf(_ev_odom.pose_covariance[_ev_odom.COVARIANCE_MATRIX_VY_VARIANCE],
-											   _ev_odom.pose_covariance[_ev_odom.COVARIANCE_MATRIX_VZ_VARIANCE]))));
+				float param_evv_noise_var = sq(_param_ekf2_evv_noise.get());
+
+				if (!_param_ekf2_ev_noise_md.get() && PX4_ISFINITE(_ev_odom.pose_covariance[_ev_odom.COVARIANCE_MATRIX_VX_VARIANCE])
+				    && PX4_ISFINITE(_ev_odom.pose_covariance[_ev_odom.COVARIANCE_MATRIX_VY_VARIANCE])
+				    && PX4_ISFINITE(_ev_odom.pose_covariance[_ev_odom.COVARIANCE_MATRIX_VZ_VARIANCE])) {
+					ev_data.velVar(0) = fmaxf(param_evv_noise_var, _ev_odom.pose_covariance[_ev_odom.COVARIANCE_MATRIX_VX_VARIANCE]);
+					ev_data.velVar(1) = fmaxf(param_evv_noise_var, _ev_odom.pose_covariance[_ev_odom.COVARIANCE_MATRIX_VY_VARIANCE]);
+					ev_data.velVar(2) = fmaxf(param_evv_noise_var, _ev_odom.pose_covariance[_ev_odom.COVARIANCE_MATRIX_VZ_VARIANCE]);
 
 				} else {
-					ev_data.velErr = _param_ekf2_evv_noise.get();
+					ev_data.velVar.setAll(param_evv_noise_var);
 				}
 			}
 
@@ -1127,17 +1128,18 @@ void Ekf2::Run()
 				ev_data.pos(1) = _ev_odom.y;
 				ev_data.pos(2) = _ev_odom.z;
 
+				float param_evp_noise_var = sq(_param_ekf2_evp_noise.get());
+
 				// position measurement error from ev_data or parameters
-				if (!_param_ekf2_ev_noise_md.get() && PX4_ISFINITE(_ev_odom.pose_covariance[_ev_odom.COVARIANCE_MATRIX_X_VARIANCE])) {
-					ev_data.posErr = fmaxf(_param_ekf2_evp_noise.get(),
-							       sqrtf(fmaxf(_ev_odom.pose_covariance[_ev_odom.COVARIANCE_MATRIX_X_VARIANCE],
-									   _ev_odom.pose_covariance[_ev_odom.COVARIANCE_MATRIX_Y_VARIANCE])));
-					ev_data.hgtErr = fmaxf(_param_ekf2_evp_noise.get(),
-							       sqrtf(_ev_odom.pose_covariance[_ev_odom.COVARIANCE_MATRIX_Z_VARIANCE]));
+				if (!_param_ekf2_ev_noise_md.get() && PX4_ISFINITE(_ev_odom.pose_covariance[_ev_odom.COVARIANCE_MATRIX_X_VARIANCE])
+				    && PX4_ISFINITE(_ev_odom.pose_covariance[_ev_odom.COVARIANCE_MATRIX_Y_VARIANCE])
+				    && PX4_ISFINITE(_ev_odom.pose_covariance[_ev_odom.COVARIANCE_MATRIX_Z_VARIANCE])) {
+					ev_data.posVar(0) = fmaxf(param_evp_noise_var, _ev_odom.pose_covariance[_ev_odom.COVARIANCE_MATRIX_X_VARIANCE]);
+					ev_data.posVar(1) = fmaxf(param_evp_noise_var, _ev_odom.pose_covariance[_ev_odom.COVARIANCE_MATRIX_Y_VARIANCE]);
+					ev_data.posVar(2) = fmaxf(param_evp_noise_var, _ev_odom.pose_covariance[_ev_odom.COVARIANCE_MATRIX_Z_VARIANCE]);
 
 				} else {
-					ev_data.posErr = _param_ekf2_evp_noise.get();
-					ev_data.hgtErr = _param_ekf2_evp_noise.get();
+					ev_data.posVar.setAll(param_evp_noise_var);
 				}
 			}
 
@@ -1146,21 +1148,18 @@ void Ekf2::Run()
 				ev_data.quat = matrix::Quatf(_ev_odom.q);
 
 				// orientation measurement error from ev_data or parameters
-				if (!_param_ekf2_ev_noise_md.get()
-				    && PX4_ISFINITE(_ev_odom.pose_covariance[_ev_odom.COVARIANCE_MATRIX_YAW_VARIANCE])) {
-					ev_data.angErr = fmaxf(_param_ekf2_eva_noise.get(),
-							       sqrtf(_ev_odom.pose_covariance[_ev_odom.COVARIANCE_MATRIX_YAW_VARIANCE]));
+				float param_eva_noise_var = sq(_param_ekf2_eva_noise.get());
+
+				if (!_param_ekf2_ev_noise_md.get() && PX4_ISFINITE(_ev_odom.pose_covariance[_ev_odom.COVARIANCE_MATRIX_YAW_VARIANCE])) {
+					ev_data.angVar = fmaxf(param_eva_noise_var, _ev_odom.pose_covariance[_ev_odom.COVARIANCE_MATRIX_YAW_VARIANCE]);
 
 				} else {
-					ev_data.angErr = _param_ekf2_eva_noise.get();
+					ev_data.angVar = param_eva_noise_var;
 				}
 			}
 
-			// only set data if all positions and orientation are valid
-			if (ev_data.posErr < ep_max_std_dev && ev_data.angErr < eo_max_std_dev) {
-				// use timestamp from external computer, clocks are synchronized when using MAVROS
-				_ekf.setExtVisionData(_ev_odom.timestamp, &ev_data);
-			}
+			// use timestamp from external computer, clocks are synchronized when using MAVROS
+			_ekf.setExtVisionData(_ev_odom.timestamp, &ev_data);
 
 			ekf2_timestamps.visual_odometry_timestamp_rel = (int16_t)((int64_t)_ev_odom.timestamp / 100 -
 					(int64_t)ekf2_timestamps.timestamp / 100);
@@ -1182,8 +1181,8 @@ void Ekf2::Run()
 				// we can only use the landing target if it has a fixed position and  a valid velocity estimate
 				if (landing_target_pose.is_static && landing_target_pose.rel_vel_valid) {
 					// velocity of vehicle relative to target has opposite sign to target relative to vehicle
-					float velocity[2] = { -landing_target_pose.vx_rel, -landing_target_pose.vy_rel};
-					float variance[2] = {landing_target_pose.cov_vx_rel, landing_target_pose.cov_vy_rel};
+					matrix::Vector3f velocity { -landing_target_pose.vx_rel, -landing_target_pose.vy_rel, 0.0f};
+					matrix::Vector3f variance {landing_target_pose.cov_vx_rel, landing_target_pose.cov_vy_rel, 0.0f};
 					_ekf.setAuxVelData(landing_target_pose.timestamp, velocity, variance);
 				}
 			}
@@ -1490,16 +1489,17 @@ void Ekf2::Run()
 			_ekf.get_state_delayed(status.states);
 			status.n_states = 24;
 			_ekf.covariances_diagonal().copyTo(status.covariances);
+			_ekf.get_output_tracking_error(&status.output_tracking_error[0]);
 			_ekf.get_gps_check_status(&status.gps_check_fail_flags);
 			// only report enabled GPS check failures (the param indexes are shifted by 1 bit, because they don't include
 			// the GPS Fix bit, which is always checked)
 			status.gps_check_fail_flags &= ((uint16_t)_params->gps_check_mask << 1) | 1;
 			status.control_mode_flags = control_status.value;
 			_ekf.get_filter_fault_status(&status.filter_fault_flags);
-			_ekf.get_innovation_test_status(&status.innovation_check_flags, &status.mag_test_ratio,
-							&status.vel_test_ratio, &status.pos_test_ratio,
-							&status.hgt_test_ratio, &status.tas_test_ratio,
-							&status.hagl_test_ratio, &status.beta_test_ratio);
+			_ekf.get_innovation_test_status(status.innovation_check_flags, status.mag_test_ratio,
+							status.vel_test_ratio, status.pos_test_ratio,
+							status.hgt_test_ratio, status.tas_test_ratio,
+							status.hagl_test_ratio, status.beta_test_ratio);
 
 			status.pos_horiz_accuracy = _vehicle_local_position_pub.get().eph;
 			status.pos_vert_accuracy = _vehicle_local_position_pub.get().epv;
@@ -1608,28 +1608,70 @@ void Ekf2::Run()
 
 			{
 				// publish estimator innovation data
-				ekf2_innovations_s innovations;
+				estimator_innovations_s innovations;
 				innovations.timestamp = now;
-				_ekf.get_vel_pos_innov(&innovations.vel_pos_innov[0]);
-				_ekf.get_aux_vel_innov(&innovations.aux_vel_innov[0]);
-				_ekf.get_mag_innov(&innovations.mag_innov[0]);
-				_ekf.get_heading_innov(&innovations.heading_innov);
-				_ekf.get_airspeed_innov(&innovations.airspeed_innov);
-				_ekf.get_beta_innov(&innovations.beta_innov);
-				_ekf.get_flow_innov(&innovations.flow_innov[0]);
-				_ekf.get_hagl_innov(&innovations.hagl_innov);
-				_ekf.get_drag_innov(&innovations.drag_innov[0]);
+				_ekf.getGpsVelPosInnov(&innovations.gps_hvel[0], innovations.gps_vvel, &innovations.gps_hpos[0],
+						       innovations.gps_vpos);
+				_ekf.getEvVelPosInnov(&innovations.ev_hvel[0], innovations.ev_vvel, &innovations.ev_hpos[0], innovations.ev_vpos);
+				_ekf.getBaroHgtInnov(innovations.baro_vpos);
+				_ekf.getRngHgtInnov(innovations.rng_vpos);
+				_ekf.getAuxVelInnov(&innovations.aux_hvel[0]);
+				_ekf.getFlowInnov(&innovations.flow[0]);
+				_ekf.getHeadingInnov(innovations.heading);
+				_ekf.getMagInnov(innovations.mag_field);
+				_ekf.getDragInnov(&innovations.drag[0]);
+				_ekf.getAirspeedInnov(innovations.airspeed);
+				_ekf.getBetaInnov(innovations.beta);
+				_ekf.getHaglInnov(innovations.hagl);
+				// Not yet supported
+				innovations.aux_vvel = NAN;
+				innovations.fake_hpos[0] = innovations.fake_hpos[1] = innovations.fake_vpos = NAN;
+				innovations.fake_hvel[0] = innovations.fake_hvel[1] = innovations.fake_vvel = NAN;
 
-				_ekf.get_vel_pos_innov_var(&innovations.vel_pos_innov_var[0]);
-				_ekf.get_mag_innov_var(&innovations.mag_innov_var[0]);
-				_ekf.get_heading_innov_var(&innovations.heading_innov_var);
-				_ekf.get_airspeed_innov_var(&innovations.airspeed_innov_var);
-				_ekf.get_beta_innov_var(&innovations.beta_innov_var);
-				_ekf.get_flow_innov_var(&innovations.flow_innov_var[0]);
-				_ekf.get_hagl_innov_var(&innovations.hagl_innov_var);
-				_ekf.get_drag_innov_var(&innovations.drag_innov_var[0]);
+				// publish estimator innovation variance data
+				estimator_innovations_s innovation_var;
+				innovation_var.timestamp = now;
+				_ekf.getGpsVelPosInnovVar(&innovation_var.gps_hvel[0], innovation_var.gps_vvel, &innovation_var.gps_hpos[0],
+							  innovation_var.gps_vpos);
+				_ekf.getEvVelPosInnovVar(&innovation_var.ev_hvel[0], innovation_var.ev_vvel, &innovation_var.ev_hpos[0],
+							 innovation_var.ev_vpos);
+				_ekf.getBaroHgtInnovVar(innovation_var.baro_vpos);
+				_ekf.getRngHgtInnovVar(innovation_var.rng_vpos);
+				_ekf.getAuxVelInnovVar(&innovation_var.aux_hvel[0]);
+				_ekf.getFlowInnovVar(&innovation_var.flow[0]);
+				_ekf.getHeadingInnovVar(innovation_var.heading);
+				_ekf.getMagInnovVar(&innovation_var.mag_field[0]);
+				_ekf.getDragInnovVar(&innovation_var.drag[0]);
+				_ekf.getAirspeedInnovVar(innovation_var.airspeed);
+				_ekf.getBetaInnovVar(innovation_var.beta);
+				_ekf.getHaglInnovVar(innovation_var.hagl);
+				// Not yet supported
+				innovation_var.aux_vvel = NAN;
+				innovation_var.fake_hpos[0] = innovation_var.fake_hpos[1] = innovation_var.fake_vpos = NAN;
+				innovation_var.fake_hvel[0] = innovation_var.fake_hvel[1] = innovation_var.fake_vvel = NAN;
 
-				_ekf.get_output_tracking_error(&innovations.output_tracking_error[0]);
+
+				// publish estimator innovation test ratio data
+				estimator_innovations_s test_ratios;
+				test_ratios.timestamp = now;
+				_ekf.getGpsVelPosInnovRatio(test_ratios.gps_hvel[0], test_ratios.gps_vvel, test_ratios.gps_hpos[0],
+							    test_ratios.gps_vpos);
+				_ekf.getEvVelPosInnovRatio(test_ratios.ev_hvel[0], test_ratios.ev_vvel, test_ratios.ev_hpos[0],
+							   test_ratios.ev_vpos);
+				_ekf.getBaroHgtInnovRatio(test_ratios.baro_vpos);
+				_ekf.getRngHgtInnovRatio(test_ratios.rng_vpos);
+				_ekf.getAuxVelInnovRatio(test_ratios.aux_hvel[0]);
+				_ekf.getFlowInnovRatio(test_ratios.flow[0]);
+				_ekf.getHeadingInnovRatio(test_ratios.heading);
+				_ekf.getMagInnovRatio(test_ratios.mag_field[0]);
+				_ekf.getDragInnovRatio(&test_ratios.drag[0]);
+				_ekf.getAirspeedInnovRatio(test_ratios.airspeed);
+				_ekf.getBetaInnovRatio(test_ratios.beta);
+				_ekf.getHaglInnovRatio(test_ratios.hagl);
+				// Not yet supported
+				test_ratios.aux_vvel = NAN;
+				test_ratios.fake_hpos[0] = test_ratios.fake_hpos[1] = test_ratios.fake_vpos = NAN;
+				test_ratios.fake_hvel[0] = test_ratios.fake_hvel[1] = test_ratios.fake_vvel = NAN;
 
 				// calculate noise filtered velocity innovations which are used for pre-flight checking
 				if (_vehicle_status.arming_state == vehicle_status_s::ARMING_STATE_STANDBY) {
@@ -1641,34 +1683,14 @@ void Ekf2::Run()
 				}
 
 				_estimator_innovations_pub.publish(innovations);
+				_estimator_innovation_variances_pub.publish(innovation_var);
+				_estimator_innovation_test_ratios_pub.publish(test_ratios);
+
 			}
 		}
 
 		// publish ekf2_timestamps
 		_ekf2_timestamps_pub.publish(ekf2_timestamps);
-	}
-}
-
-void Ekf2::runEkfReinit(const hrt_abstime sensor_time_us)
-{
-	const bool is_armed = (_vehicle_status.arming_state == vehicle_status_s::ARMING_STATE_ARMED);
-
-	if (is_armed) {
-		_ekf_reinit_eval.reset();
-
-	} else {
-		_ekf_reinit_eval.update(_ekf.isVehicleAtRest());
-
-		if (_ekf_reinit_eval.shouldResetAll()) {
-			PX4_INFO("Long motion detected: Reinitialize EKF");
-			_ekf.reset(sensor_time_us);
-			_ekf_reinit_eval.reset();
-
-		} else if (_ekf_reinit_eval.shouldResetStatesAndCovariances()) {
-			PX4_INFO("Motion detected: Reset EKF states and covariances");
-			_ekf.resetStatesAndCovariances();
-			_ekf_reinit_eval.reset();
-		}
 	}
 }
 
@@ -1696,7 +1718,7 @@ void Ekf2::fillGpsMsgWithVehicleGpsPosData(gps_message &msg, const vehicle_gps_p
 void Ekf2::runPreFlightChecks(const float dt,
 			      const filter_control_status_u &control_status,
 			      const vehicle_status_s &vehicle_status,
-			      const ekf2_innovations_s &innov)
+			      const estimator_innovations_s &innov)
 {
 	const bool can_observe_heading_in_flight = (vehicle_status.vehicle_type != vehicle_status_s::VEHICLE_TYPE_ROTARY_WING);
 
@@ -1704,6 +1726,7 @@ void Ekf2::runPreFlightChecks(const float dt,
 	_preflt_checker.setUsingGpsAiding(control_status.flags.gps);
 	_preflt_checker.setUsingFlowAiding(control_status.flags.opt_flow);
 	_preflt_checker.setUsingEvPosAiding(control_status.flags.ev_pos);
+	_preflt_checker.setUsingEvVelAiding(control_status.flags.ev_vel);
 
 	_preflt_checker.update(dt, innov);
 }
@@ -1765,10 +1788,10 @@ bool Ekf2::publish_wind_estimate(const hrt_abstime &timestamp)
 		float wind_var[2];
 		_ekf.get_wind_velocity(velNE_wind);
 		_ekf.get_wind_velocity_var(wind_var);
-		_ekf.get_airspeed_innov(&wind_estimate.tas_innov);
-		_ekf.get_airspeed_innov_var(&wind_estimate.tas_innov_var);
-		_ekf.get_beta_innov(&wind_estimate.beta_innov);
-		_ekf.get_beta_innov_var(&wind_estimate.beta_innov_var);
+		_ekf.getAirspeedInnov(wind_estimate.tas_innov);
+		_ekf.getAirspeedInnovVar(wind_estimate.tas_innov_var);
+		_ekf.getBetaInnov(wind_estimate.beta_innov);
+		_ekf.getBetaInnovVar(wind_estimate.beta_innov_var);
 		wind_estimate.timestamp = timestamp;
 		wind_estimate.windspeed_north = velNE_wind[0];
 		wind_estimate.windspeed_east = velNE_wind[1];

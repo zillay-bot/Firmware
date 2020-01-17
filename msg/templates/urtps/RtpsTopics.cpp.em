@@ -13,7 +13,7 @@
 import os
 
 import genmsg.msgs
-import gencpp
+
 from px_generate_uorb_topic_helper import * # this is in Tools/
 from px_generate_uorb_topic_files import MsgScope # this is in Tools/
 
@@ -29,7 +29,7 @@ except AttributeError:
 /****************************************************************************
  *
  * Copyright 2017 Proyectos y Sistemas de Mantenimiento SL (eProsima).
- * Copyright (C) 2018-2019 PX4 Development Team. All rights reserved.
+ * Copyright (c) 2018-2019 PX4 Development Team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:

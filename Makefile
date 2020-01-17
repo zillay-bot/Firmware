@@ -223,10 +223,10 @@ posix_sitl_default:
 .PHONY: all posix px4_sitl_default all_config_targets all_default_targets
 
 # Multi- config targets.
-eagle_default: atlflight_eagle_default atlflight_eagle_qurt-default
+eagle_default: atlflight_eagle_default atlflight_eagle_qurt
 eagle_rtps: atlflight_eagle_rtps atlflight_eagle_qurt-rtps
 
-excelsior_default: atlflight_excelsior_default atlflight_excelsior_qurt-default
+excelsior_default: atlflight_excelsior_default atlflight_excelsior_qurt
 excelsior_rtps: atlflight_excelsior_rtps atlflight_excelsior_qurt-rtps
 
 .PHONY: eagle_default eagle_rtps
@@ -263,8 +263,6 @@ misc_qgc_extra_firmware: \
 # Other NuttX firmware
 alt_firmware: \
 	check_px4_cannode-v1_default \
-	check_px4_esc-v1_default \
-	check_thiemar_s2740vc-v1_default \
 	sizes
 
 # builds with RTPS
@@ -358,6 +356,18 @@ tests_coverage:
 
 rostest: px4_sitl_default
 	@$(MAKE) --no-print-directory px4_sitl_default sitl_gazebo
+
+tests_integration: px4_sitl_default
+	@$(MAKE) --no-print-directory px4_sitl_default sitl_gazebo
+	@$(MAKE) --no-print-directory px4_sitl_default mavsdk_tests
+	@"$(SRC_DIR)"/test/mavsdk_tests/mavsdk_test_runner.py --speed-factor 100
+
+tests_integration_coverage:
+	@$(MAKE) clean
+	@$(MAKE) --no-print-directory px4_sitl_default PX4_CMAKE_BUILD_TYPE=Coverage
+	@$(MAKE) --no-print-directory px4_sitl_default sitl_gazebo
+	@$(MAKE) --no-print-directory px4_sitl_default mavsdk_tests
+	@"$(SRC_DIR)"/test/mavsdk_tests/mavsdk_test_runner.py --speed-factor 15
 
 tests_mission: rostest
 	@"$(SRC_DIR)"/test/rostest_px4_run.sh mavros_posix_tests_missions.test

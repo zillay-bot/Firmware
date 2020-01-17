@@ -41,6 +41,7 @@ px4_add_board(
 		magnetometer # all available magnetometer drivers
 		#mkblctrl
 		optical_flow # all available optical flow drivers
+		#osd
 		#pca9685
 		#power_monitor/ina226
 		#protocol_splitter
@@ -60,7 +61,7 @@ px4_add_board(
 		airspeed_selector
 		attitude_estimator_q
 		battery_status
-		camera_feedback
+		#camera_feedback
 		commander
 		dataman
 		ekf2
@@ -68,14 +69,15 @@ px4_add_board(
 		fw_att_control
 		fw_pos_control_l1
 		land_detector
-		landing_target_estimator
+		#landing_target_estimator
 		load_mon
-		local_position_estimator
+		#local_position_estimator
 		logger
 		mavlink
 		mc_att_control
 		mc_pos_control
 		mc_rate_control
+		#micrortps_bridge
 		navigator
 		rc_update
 		rover_pos_control
@@ -104,7 +106,7 @@ px4_add_board(
 		reflect
 		sd_bench
 		shutdown
-		#tests # tests and test runner
+		tests # tests and test runner
 		top
 		topic_listener
 		tune_control
