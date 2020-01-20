@@ -68,8 +68,7 @@ bool PreFlightCheck::ekf2Check(orb_advert_t *mavlink_log_pub, vehicle_status_s &
 	if (status.pre_flt_fail_innov_heading ||
 	    status.pre_flt_fail_innov_vel_horiz ||
 	    status.pre_flt_fail_innov_vel_vert ||
-	    status.pre_flt_fail_innov_height ||
-	    status.pre_flt_fail_mag_field_disturbed) {
+	    status.pre_flt_fail_innov_height) {
 		if (report_fail) {
 			if (status.pre_flt_fail_innov_heading) {
 				mavlink_log_critical(mavlink_log_pub, "Preflight Fail: heading estimate not stable");
@@ -82,9 +81,6 @@ bool PreFlightCheck::ekf2Check(orb_advert_t *mavlink_log_pub, vehicle_status_s &
 
 			} else if (status.pre_flt_fail_innov_height) {
 				mavlink_log_critical(mavlink_log_pub, "Preflight Fail: height estimate not stable");
-
-			} else if (status.pre_flt_fail_mag_field_disturbed) {
-				mavlink_log_critical(mavlink_log_pub, "Preflight Fail: strong magnetic interference detected");
 			}
 		}
 
