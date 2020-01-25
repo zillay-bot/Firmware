@@ -753,7 +753,7 @@ void Simulator::run()
 
 			} else {
 				::close(_fd);
-				system_sleep(1);
+				system_usleep(100);
 			}
 		}
 
