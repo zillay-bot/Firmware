@@ -13,7 +13,7 @@ import signal
 
 test_matrix = [
     {
-        "model": "iris",
+        "model": "typhoon_h480",
         "test_filter": "[multicopter]",
         "timeout_min": 20,
     },
