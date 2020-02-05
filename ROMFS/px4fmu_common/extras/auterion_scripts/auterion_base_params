@@ -29,6 +29,7 @@ param set MAV_1_CONFIG 102
 param set MAV_1_FORWARD 1
 param set MAV_1_MODE 2
 param set MAV_1_RATE 100000
+param set MAV_1_RADIO_CTL 0
 param set SER_TEL1_BAUD 57600
 param set SER_TEL2_BAUD 1500000
 
