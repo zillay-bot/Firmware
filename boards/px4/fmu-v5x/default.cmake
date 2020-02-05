@@ -33,7 +33,7 @@ px4_add_board(
 		imu/adis16497
 		imu/bmi088
 		imu/mpu6000
-		imu/st/ism330dlc
+		#imu/st/ism330dlc
 		irlock
 		lights/blinkm
 		lights/rgbled
