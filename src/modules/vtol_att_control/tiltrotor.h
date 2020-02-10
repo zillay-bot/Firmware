@@ -101,7 +101,7 @@ private:
 	float _tilt_control{0.0f};		/**< actuator value for the tilt servo */
 
 	void parameters_update() override;
-	hrt_abstime _last_timestamp_disarmed; /**< used for calculating time since arming */
+	hrt_abstime _last_timestamp_disarmed{0}; /**< used for calculating time since arming */
 
 };
 #endif

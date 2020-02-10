@@ -230,6 +230,7 @@ void Tiltrotor::update_mc_state()
 		// disarmed or less than 1 s since arming --> set tilt to spinup value
 		_tilt_control = _params_tiltrotor.tilt_spinup;
 		_mc_yaw_weight = 0.0f;
+
 	} else {
 		// normal operation
 		_tilt_control = VtolType::pusher_assist();

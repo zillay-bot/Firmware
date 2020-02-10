@@ -72,7 +72,10 @@ PARAM_DEFINE_FLOAT(VT_TILT_TRANS, 0.3f);
 PARAM_DEFINE_FLOAT(VT_TILT_FW, 1.0f);
 
 /**
- * Position of tilt servo during motor spinup (till 1s after arming)
+ * Tilt actuator control value commanded when disarmed and during the first second after arming.
+ *
+ * This specific tilt during spin-up is necessary for some systems whose motors otherwise don't
+ * spin-up freely.
  *
  * @min 0.0
  * @max 1.0
