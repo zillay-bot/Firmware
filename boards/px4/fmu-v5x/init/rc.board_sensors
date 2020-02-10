@@ -2,7 +2,6 @@
 #
 # PX4 FMUv5X specific board sensors init
 #------------------------------------------------------------------------------
-
 adc start
 
 # Start Digital power monitors
@@ -10,10 +9,10 @@ ina226 -b 0 -t 1 -f start
 ina226 -b 1 -t 2 -f start
 
 # Internal SPI bus ICM-20602
-mpu6000 -R 8 -s -T 20602 start
+mpu6000 -R 0 -s -T 20602 start
 
 # Internal SPI bus ISM300DLC
-ism330dlc start
+# ism330dlc start
 
 # Internal SPI bus BMI088 accel
 bmi088 -A -R 12 start
