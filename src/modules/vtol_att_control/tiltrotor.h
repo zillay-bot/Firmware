@@ -102,6 +102,7 @@ private:
 
 	void parameters_update() override;
 	hrt_abstime _last_timestamp_disarmed{0}; /**< used for calculating time since arming */
+	bool _tilt_motors_for_startup{false};
 
 };
 #endif

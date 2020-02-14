@@ -222,12 +222,16 @@ void Tiltrotor::update_mc_state()
 	// reset this timestamp while disarmed
 	if (!_v_control_mode->flag_armed) {
 		_last_timestamp_disarmed = hrt_absolute_time();
+		_tilt_motors_for_startup = true;
+
+	} else if (_tilt_motors_for_startup) {
+		// leave motors tilted forward for 1 second after arming to allow them to spin up easier
+		if (hrt_absolute_time() - _last_timestamp_disarmed > 1_s) {
+			_tilt_motors_for_startup = false;
+		}
 	}
 
-	hrt_abstime time_since_arming = hrt_absolute_time() - _last_timestamp_disarmed;
-
-	if (!_v_control_mode->flag_armed || time_since_arming < 1_s) {
-		// disarmed or less than 1 s since arming --> set tilt to spinup value
+	if (_tilt_motors_for_startup) {
 		_tilt_control = _params_tiltrotor.tilt_spinup;
 		_mc_yaw_weight = 0.0f;
 
