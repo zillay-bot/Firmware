@@ -264,7 +264,7 @@ void Tiltrotor::update_transition_state()
 	}
 
 	if (_vtol_schedule.flight_mode == vtol_mode::TRANSITION_FRONT_P1) {
-		// for the first part of the transition the all rotors are enabled
+		// for the first part of the transition all rotors are enabled
 		if (_motor_state != motor_state::ENABLED) {
 			_motor_state = set_motor_state(_motor_state, motor_state::ENABLED);
 		}
