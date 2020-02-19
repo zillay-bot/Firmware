@@ -94,4 +94,4 @@ parameters:
             type: boolean
             reboot_required: true
             num_instances: *max_num_config_instances
-            default: [true, true, true]
+            default: [false, false, false]
