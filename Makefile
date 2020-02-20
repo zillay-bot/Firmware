@@ -351,8 +351,9 @@ tests:
 
 tests_coverage:
 	@$(MAKE) clean
-	@$(MAKE) --no-print-directory px4_sitl_default test_coverage_genhtml PX4_CMAKE_BUILD_TYPE=Coverage
-	@echo "Open "$(SRC_DIR)"/build/px4_sitl_default/coverage-html/index.html to see coverage"
+	@$(MAKE) --no-print-directory tests PX4_CMAKE_BUILD_TYPE=Coverage
+	@mkdir -p coverage
+	@lcov --directory build/px4_sitl_test --base-directory build/px4_sitl_test --gcov-tool gcov --capture -o coverage/lcov.info
 
 rostest: px4_sitl_default
 	@$(MAKE) --no-print-directory px4_sitl_default sitl_gazebo
@@ -370,6 +371,13 @@ tests_integration_coverage:
 	@"$(SRC_DIR)"/test/mavsdk_tests/mavsdk_test_runner.py --speed-factor 100
 	@mkdir -p coverage
 	@lcov --directory build/px4_sitl_default --base-directory build/px4_sitl_default --gcov-tool gcov --capture -o coverage/lcov.info
+
+tests_all_coverage:
+	@$(MAKE) tests_coverage
+	@mv coverage/lcov.info coverage/unit_tests_lcov.info
+	@$(MAKE) tests_integration_coverage
+	@mv coverage/lcov.info coverage/integration_tests_lcov.info
+	@lcov -a coverage/unit_tests_lcov.info -a coverage/integration_tests_lcov.info -o coverage/lcov.info
 
 tests_mission: rostest
 	@"$(SRC_DIR)"/test/rostest_px4_run.sh mavros_posix_tests_missions.test

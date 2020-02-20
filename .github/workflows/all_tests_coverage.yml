@@ -1,4 +1,4 @@
-name: SITL Tests (Code Coverage)
+name: ALL Tests (Code Coverage)
 
 on: [push]
 
@@ -30,7 +30,7 @@ jobs:
     # - name: Build newer mavsdk
     #   run: mkdir -p MAVSDK/build/default && cd MAVSDK/build/default && cmake ../.. && make -j4 && make install
     - name: Run Coverage Tests
-      run: make tests_integration_coverage
+      run: make tests_all_coverage
     - name: Upload coverage information to Coveralls
       uses: coverallsapp/github-action@master
       with:
