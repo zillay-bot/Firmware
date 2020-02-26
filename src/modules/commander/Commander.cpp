@@ -3733,7 +3733,6 @@ void Commander::data_link_check()
 
 void Commander::avoidance_check()
 {
-
 	for (unsigned i = 0; i < ORB_MULTI_MAX_INSTANCES; i++) {
 		if (_sub_distance_sensor[i].updated()) {
 			distance_sensor_s distance_sensor {};
@@ -3754,10 +3753,10 @@ void Commander::avoidance_check()
 	const bool sensor_oa_present = cp_healthy || status_flags.avoidance_system_required || cp_enabled;
 
 	const bool auto_mode = _internal_state.main_state == commander_state_s::MAIN_STATE_AUTO_MISSION
-			       || _internal_state.main_state == commander_state_s::MAIN_STATE_AUTO_LOITER ||
-			       _internal_state.main_state == commander_state_s::MAIN_STATE_AUTO_RTL
-			       || _internal_state.main_state == commander_state_s::MAIN_STATE_OFFBOARD  ||
-			       _internal_state.main_state == commander_state_s::MAIN_STATE_AUTO_TAKEOFF
+			       || _internal_state.main_state == commander_state_s::MAIN_STATE_AUTO_LOITER
+			       || _internal_state.main_state == commander_state_s::MAIN_STATE_AUTO_RTL
+			       || _internal_state.main_state == commander_state_s::MAIN_STATE_OFFBOARD
+			       || _internal_state.main_state == commander_state_s::MAIN_STATE_AUTO_TAKEOFF
 			       || _internal_state.main_state == commander_state_s::MAIN_STATE_AUTO_LAND;
 	const bool pos_ctl_mode = _internal_state.main_state == commander_state_s::MAIN_STATE_POSCTL;
 
@@ -3768,7 +3767,6 @@ void Commander::avoidance_check()
 
 	set_health_flags(subsystem_info_s::SUBSYSTEM_TYPE_OBSTACLE_AVOIDANCE, sensor_oa_present, sensor_oa_enabled,
 			 sensor_oa_healthy, status);
-
 }
 
 void Commander::battery_status_check()

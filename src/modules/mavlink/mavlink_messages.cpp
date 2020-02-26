@@ -5091,7 +5091,7 @@ protected:
 			msg.min_distance = obstacle_distance.min_distance;
 			msg.max_distance = obstacle_distance.max_distance;
 			msg.angle_offset = obstacle_distance.angle_offset;
-			msg.increment_f = static_cast<float>(obstacle_distance.increment);
+			msg.increment_f = obstacle_distance.increment;
 			msg.frame = obstacle_distance.frame;
 
 			mavlink_msg_obstacle_distance_send_struct(_mavlink->get_channel(), &msg);
