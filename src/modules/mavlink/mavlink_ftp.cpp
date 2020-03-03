@@ -43,8 +43,14 @@
 #include <cstring>
 
 #include "mavlink_ftp.h"
-#include "mavlink_main.h"
 #include "mavlink_tests/mavlink_ftp_test.h"
+
+#ifndef MAVLINK_FTP_UNIT_TEST
+#include "mavlink_main.h"
+#else
+#include <v2.0/common/mavlink.h>
+#endif
+
 
 constexpr const char MavlinkFTP::_root_dir[];
 
@@ -171,7 +177,11 @@ MavlinkFTP::_process_request(
 		if (payload->seq_number + 1 == last_payload->seq_number) {
 			// this is the same request as the one we replied to last. It means the (n)ack got lost, and the GCS
 			// resent the request
+#ifdef MAVLINK_FTP_UNIT_TEST
+			_utRcvMsgFunc(last_reply, _worker_data);
+#else
 			mavlink_msg_file_transfer_protocol_send_struct(_mavlink->get_channel(), last_reply);
+#endif
 			return;
 		}
 	}

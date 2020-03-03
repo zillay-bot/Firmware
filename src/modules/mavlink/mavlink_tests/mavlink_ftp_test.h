@@ -37,7 +37,11 @@
 #pragma once
 
 #include <unit_test.h>
+#ifndef MAVLINK_FTP_UNIT_TEST
 #include "../mavlink_bridge_header.h"
+#else
+#include <v2.0/common/mavlink.h>
+#endif
 #include "../mavlink_ftp.h"
 
 class MavlinkFtpTest : public UnitTest
