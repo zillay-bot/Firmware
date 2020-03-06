@@ -129,7 +129,7 @@ inline void ZeroOrderHoverThrustEkf::updateMeasurementNoise(const float residual
 	const float alpha = _dt / (noise_learning_time_constant + _dt);
 	const float res_no_bias = residual - _residual_lpf;
 	const float P = _state_var;
-	_acc_var = math::constrain((1.f - alpha) * _acc_var  + alpha * (res_no_bias * res_no_bias + H * P * H), 1e-4f, 60.f);
+	_acc_var = math::constrain((1.f - alpha) * _acc_var  + alpha * (res_no_bias * res_no_bias + H * P * H), 1.f, 400.f);
 }
 
 inline void ZeroOrderHoverThrustEkf::bumpStateVariance()
@@ -141,7 +141,7 @@ inline void ZeroOrderHoverThrustEkf::updateLpf(const float residual, const float
 {
 	const float alpha = _dt / (5.f * noise_learning_time_constant + _dt);
 	_residual_lpf = (1.f - alpha) * _residual_lpf + alpha * residual;
-	_innov_test_ratio_lpf = (1.f - alpha) * _innov_test_ratio_lpf + alpha * math::min(innov_test_ratio, 5.f);
+	_innov_test_ratio_lpf = (1.f - alpha) * _innov_test_ratio_lpf + alpha * math::min(innov_test_ratio, 1.5f);
 }
 
 inline ZeroOrderHoverThrustEkf::status ZeroOrderHoverThrustEkf::packStatus(const float innov, const float innov_var,

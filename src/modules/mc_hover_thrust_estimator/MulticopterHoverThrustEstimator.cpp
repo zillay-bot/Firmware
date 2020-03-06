@@ -121,8 +121,10 @@ void MulticopterHoverThrustEstimator::Run()
 		// This is only necessary because the landed
 		// flag of the land detector does not guarantee that
 		// the vehicle does not touch the ground anymore
+		// Even if the dist_bottom is in theory not valid
+		// without range finder, the altitude AGL after takeoff is good enough
 		// TODO: improve the landed flag
-		_in_air = local_pos.z < -1.f;
+		_in_air = local_pos.dist_bottom > 1.f;
 	}
 
 	ZeroOrderHoverThrustEkf::status status{};
