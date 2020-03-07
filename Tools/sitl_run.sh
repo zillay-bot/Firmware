@@ -102,7 +102,7 @@ elif [ "$program" == "gazebo" ] && [ ! -n "$no_sim" ]; then
 				fi
 			fi
 
-			gz model --spawn-file=${src_path}/Tools/sitl_gazebo/models/${model}/${model}.sdf --model-name=${model} -x 0.0 -y 0.0 -z 0.1
+			gz model --spawn-file="${src_path}/Tools/sitl_gazebo/models/${model}/${model}.sdf" --model-name=${model} -x 1.01 -y 0.98 -z 0.83
 
 			SIM_PID=`echo $!`
 
