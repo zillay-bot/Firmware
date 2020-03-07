@@ -1071,13 +1071,16 @@ Mission::set_mission_items()
 	if (item_contains_gate(_mission_item)) {
 
 		// The mission item is a gate, let's check if the next item in the list provides
-		// a position to go towards
+		// a position to go towards.
+
 		// TODO Precision land needs to be refactored: https://github.com/PX4/Firmware/issues/14320
-		if (has_next_position_item && mission_item_next_position != WORK_ITEM_TYPE_PRECISION_LAND) {
+		if (has_next_position_item) {
 			// We have a position, convert it to the setpoint and update setpoint triplet
 			mission_apply_limitation(mission_item_next_position);
 			mission_item_to_position_setpoint(mission_item_next_position, &pos_sp_triplet->current);
 		}
+
+		// ELSE: The current position setpoint stays unchanged.
 
 	} else {
 		// The mission item is not a gate, set the current position setpoint from mission item (is protected against non-position items)
@@ -1086,6 +1089,8 @@ Mission::set_mission_items()
 			mission_apply_limitation(_mission_item);
 			mission_item_to_position_setpoint(_mission_item, &pos_sp_triplet->current);
 		}
+
+		// ELSE: The current position setpoint stays unchanged.
 	}
 
 	// Only set the previous position item if the current one really changed
